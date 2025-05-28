@@ -9,6 +9,8 @@ import globalErrorHandler from './middleware/errorMiddleware.js';
 
 import authRoutes from './routes/authRoutes.js';
 import userRoutes from './routes/userRoutes.js';
+import listingRoutes from './routes/listingRoutes.js';
+import messageRoutes from './routes/messageRoutes.js';
 
 // Load env vars
 dotenv.config();
@@ -28,7 +30,8 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 const API_PREFIX = '/api/v1';
 app.use(`${API_PREFIX}/auth`, authRoutes);
 app.use(`${API_PREFIX}/users`, userRoutes);
-// TODO: app.use(`${API_PREFIX}/listings`, listingRoutes);
+app.use(`${API_PREFIX}/listings`, listingRoutes);
+app.use(`${API_PREFIX}/conversations`, messageRoutes);
 // etc.
 
 

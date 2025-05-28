@@ -4,15 +4,33 @@ import User from '../models/User.js'; // For fetching user coordinates if needed
 import AppError from '../utils/appError.js';
 import catchAsync from '../utils/catchAsync.js';
 import cloudinary from '../config/cloudinary.js';
+import APIFeatures from '../utils/apiFeatures.js';
 
 // Get all listings (basic version)
 export const getAllListings = catchAsync(async (req, res, next) => {
-  // TODO: Implement advanced filtering, sorting, pagination in Section 7
-  const listings = await Listing.find({ status: 'active' }).sort({ createdAt: -1 });
+  // To allow for nested GET reviews on tour (hack)
+  // let filter = {};
+  // if (req.params.tourId) filter = { tour: req.params.tourId };
+  // For now, only active listings by default unless status is specified in query
+  const defaultFilters = { status: 'active' };
 
+  // Execute the query building using APIFeatures
+  const features = new APIFeatures(Listing.find(defaultFilters), req.query)
+    .filter()       // Apply basic and advanced filtering (e.g., ?category=Technology&price[lt]=500)
+    .search()       // Apply text search (e.g., ?search=keyword)
+    .geospatial()   // Apply geospatial filtering (e.g., ?latlng=lat,lng&distance=km)
+    .sort()         // Apply sorting (e.g., ?sort=-createdAt,title)
+    .limitFields()  // Apply field limiting (e.g., ?fields=title,description,user)
+    .paginate();    // Apply pagination (e.g., ?page=2&limit=10)
+
+  // const doc = await features.query.explain(); // To see query plan for optimization
+  const listings = await features.query;
+
+  // SEND RESPONSE
   res.status(200).json({
     status: 'success',
-    results: listings.length,
+    results: listings.length, // Number of results on the current page
+    // totalResults: await Listing.countDocuments(features.query.getFilter()), // TODO: Get total count for pagination metadata
     data: {
       listings,
     },
@@ -231,3 +249,5 @@ export const deleteListing = catchAsync(async (req, res, next) => {
     data: null,
   });
 });
+
+

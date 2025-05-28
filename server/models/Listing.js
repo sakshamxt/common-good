@@ -87,7 +87,7 @@ const listingSchema = new mongoose.Schema(
 listingSchema.index({ coordinates: '2dsphere' });
 
 // Index for searching by title and description (text index)
-// listingSchema.index({ title: 'text', description: 'text', tags: 'text' }); // For text search later
+listingSchema.index({ title: 'text', description: 'text', tags: 'text', category: 'text', location: 'text' }); // For text search later
 
 // Populate user details when a listing is fetched
 listingSchema.pre(/^find/, function(next) {
