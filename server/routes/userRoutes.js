@@ -1,4 +1,3 @@
-// routes/userRoutes.js
 import express from 'express';
 import { protect } from '../middleware/authMiddleware.js';
 import { uploadProfilePicture } from '../middleware/uploadMiddleware.js'; // Import Multer middleware
