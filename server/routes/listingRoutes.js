@@ -15,12 +15,12 @@ import {
 const router = express.Router();
 
 router.get('/', getAllListings);
-router.get('/:listingId', ...mongoIdParamValidation('listingId'), handleValidationErrors, getListingById);
+router.get('/:listingId', mongoIdParamValidation('listingId'), handleValidationErrors, getListingById);
 
 router.use(protect);
 
 router.post('/', uploadListingPhotos, createListingRules(), handleValidationErrors, createListing);
-router.patch('/:listingId', ...mongoIdParamValidation('listingId'), uploadListingPhotos, updateListingRules(), handleValidationErrors, updateListing);
-router.delete('/:listingId', ...mongoIdParamValidation('listingId'), handleValidationErrors, deleteListing);
+router.patch('/:listingId', mongoIdParamValidation('listingId'), uploadListingPhotos, updateListingRules(), handleValidationErrors, updateListing);
+router.delete('/:listingId', mongoIdParamValidation('listingId'), handleValidationErrors, deleteListing);
 
 export default router;

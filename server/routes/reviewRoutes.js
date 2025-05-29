@@ -15,8 +15,8 @@ import {
 const router = express.Router();
 
 // Public routes to get reviews
-router.get('/user/:userId', ...mongoIdParamValidation('userId'), handleValidationErrors, getReviewsForUser);
-router.get('/listing/:listingId', ...mongoIdParamValidation('listingId'), handleValidationErrors, getReviewsForListing);
+// router.get('/user/:userId', mongoIdParamValidation('userId'), handleValidationErrors, getReviewsForUser);
+router.get('/listing/:listingId', mongoIdParamValidation('listingId'), handleValidationErrors, getReviewsForListing);
 
 // Protected route: User must be logged in to create a review
 router.post('/', protect, createReviewRules(), handleValidationErrors, createReview);
