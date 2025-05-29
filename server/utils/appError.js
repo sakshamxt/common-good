@@ -1,12 +1,16 @@
+// utils/appError.js
 class AppError extends Error {
-  constructor(message, statusCode) {
-    super(message); // Call the parent constructor (Error)
+  constructor(message, statusCode, details = undefined) { // Added details parameter
+    super(message);
 
     this.statusCode = statusCode;
-    this.status = `${statusCode}`.startsWith('4') ? 'fail' : 'error'; // 'fail' for 4xx, 'error' for 5xx
-    this.isOperational = true; // Mark as an operational error (trusted error)
+    this.status = `${statusCode}`.startsWith('4') ? 'fail' : 'error';
+    this.isOperational = true;
+    if (details) { // If details are provided, add them to the error object
+        this.details = details;
+    }
 
-    Error.captureStackTrace(this, this.constructor); // Capture the stack trace
+    Error.captureStackTrace(this, this.constructor);
   }
 }
 

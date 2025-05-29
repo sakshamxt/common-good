@@ -2,18 +2,16 @@
 import express from 'express';
 import { signup, login, getMe } from '../controllers/authController.js';
 import { protect } from '../middleware/authMiddleware.js';
+import {
+  registrationRules,
+  loginRules,
+  handleValidationErrors,
+} from '../middleware/validationMiddleware.js'; // Import validation
 
 const router = express.Router();
 
-// Define routes for authentication
-
-// POST /api/v1/auth/signup - User registration
-router.post('/signup', signup);
-
-// POST /api/v1/auth/login - User login
-router.post('/login', login);
-
-// GET /api/v1/auth/me - Protected route
-router.get('/me', protect, getMe); // Apply protect middleware before getMe handler
+router.post('/signup', registrationRules(), handleValidationErrors, signup);
+router.post('/login', loginRules(), handleValidationErrors, login);
+router.get('/me', protect, getMe);
 
 export default router;

@@ -31,13 +31,17 @@ const handleJWTError = () => new AppError('Invalid token. Please log in again!',
 const handleJWTExpiredError = () => new AppError('Your token has expired! Please log in again.', 401);
 
 const sendErrorDev = (err, req, res) => {
-  if (req.originalUrl.startsWith('/api')) {
-    return res.status(err.statusCode).json({
+    if (req.originalUrl.startsWith('/api')) {
+    const responsePayload = {
       status: err.status,
-      error: err,
+      error: err, // In dev, send full error object
       message: err.message,
       stack: err.stack,
-    });
+    };
+    if (err.details) { // Add details if they exist
+      responsePayload.details = err.details;
+    }
+    return res.status(err.statusCode).json(responsePayload);
   }
   console.error('ERROR 💥 (Non-API DEV):', err);
   return res.status(err.statusCode).json({ // Keep JSON response for consistency
@@ -49,12 +53,16 @@ const sendErrorDev = (err, req, res) => {
 
 const sendErrorProd = (err, req, res) => {
   if (req.originalUrl.startsWith('/api')) {
-    if (err.isOperational) {
-      return res.status(err.statusCode).json({
-        status: err.status,
-        message: err.message,
-      });
-    }
+      if (err.isOperational) {
+        const responsePayload = {
+          status: err.status,
+          message: err.message,
+        };
+        if (err.details) { // Add details if they exist
+          responsePayload.details = err.details;
+        }
+        return res.status(err.statusCode).json(responsePayload);
+      }
     console.error('ERROR 💥 (API PROD):', err);
     return res.status(500).json({
       status: 'error',

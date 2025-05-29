@@ -61,6 +61,17 @@ const userSchema = new mongoose.Schema(
             type: String,
             trim: true,
         }],
+        averageRating: {
+        type: Number,
+            default: 0, // Or null if you prefer to distinguish between no ratings and a 0 rating
+            min: [0, 'Rating must be at least 0.'], // Can be 0 if no reviews
+            max: [5, 'Rating must be at most 5.'],
+            set: (val) => Math.round(val * 10) / 10, // Rounds to one decimal place on set
+        },
+        numReviews: {
+            type: Number,
+            default: 0,
+        },
 
     },
     {

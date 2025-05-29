@@ -11,6 +11,7 @@ import authRoutes from './routes/authRoutes.js';
 import userRoutes from './routes/userRoutes.js';
 import listingRoutes from './routes/listingRoutes.js';
 import messageRoutes from './routes/messageRoutes.js';
+import reviewRoutes from './routes/reviewRoutes.js';
 
 // Load env vars
 dotenv.config();
@@ -27,12 +28,11 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 
-const API_PREFIX = '/api/v1';
-app.use(`${API_PREFIX}/auth`, authRoutes);
-app.use(`${API_PREFIX}/users`, userRoutes);
-app.use(`${API_PREFIX}/listings`, listingRoutes);
-app.use(`${API_PREFIX}/conversations`, messageRoutes);
-// etc.
+app.use('/api/v1/auth', authRoutes);
+app.use(`/api/v1/users`, userRoutes);
+app.use('/api/v1/listings', listingRoutes);
+app.use('/api/v1/conversations', messageRoutes);
+app.use('/api/v1/reviews', reviewRoutes);
 
 
 // Basic Root Route
@@ -40,10 +40,6 @@ app.get('/', (req, res) => {
   res.status(200).json({
     success: true,
     message: 'Welcome to the CommonGood API!',
-    data: {
-      version: '1.0.0',
-      docs: '/api-docs' // Placeholder for future API documentation link
-    }
   });
 });
 
