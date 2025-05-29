@@ -1,110 +1,108 @@
 // middleware/errorMiddleware.js
-import AppError from '../utils/appError.js'; // Added .js extension
+import AppError from '../utils/appError.js'; // Ensure AppError is imported
 
-const handleCastErrorDB = (err) => {
-  const message = `Invalid ${err.path}: ${err.value}.`;
-  return new AppError(message, 400);
+// Define or import these helper functions if they are separate and used
+const handleCastErrorDB = (err) => new AppError(`Invalid ${err.path}: ${err.value}.`, 400);
+const handleDuplicateFieldsDB = (err) => { /* ... (implementation from previous sections) ... */ 
+    const value = err.errmsg?.match(/(["'])(\\?.)*?\1/)?.[0] || JSON.stringify(err.keyValue) || "provided value";
+    return new AppError(`Duplicate field value: ${value}. Please use another value!`, 400);
 };
-
-const handleDuplicateFieldsDB = (err) => {
-  // Updated regex to handle potential variations in MongoDB error messages
-  const match = err.message.match(/index: (.+?) dup key: { (.+?): "(.+?)" }/);
-  let value = "Unknown value";
-  if (match && match[3]) {
-    value = match[3];
-  } else if (err.keyValue) { // Fallback for other duplicate key error formats
-      const key = Object.keys(err.keyValue)[0];
-      value = `${key}: ${err.keyValue[key]}`;
-  }
-  const message = `Duplicate field value: ${value}. Please use another value!`;
-  return new AppError(message, 400);
-};
-
-
 const handleValidationErrorDB = (err) => {
-  const errors = Object.values(err.errors).map(el => el.message);
-  const message = `Invalid input data. ${errors.join('. ')}`;
-  return new AppError(message, 400);
+    const errors = Object.values(err.errors).map(el => el.message);
+    return new AppError(`Invalid input data. ${errors.join('. ')}`, 400);
 };
-
 const handleJWTError = () => new AppError('Invalid token. Please log in again!', 401);
 const handleJWTExpiredError = () => new AppError('Your token has expired! Please log in again.', 401);
 
-const sendErrorDev = (err, req, res) => {
-    if (req.originalUrl.startsWith('/api')) {
-    const responsePayload = {
-      status: err.status,
-      error: err, // In dev, send full error object
-      message: err.message,
-      stack: err.stack,
-    };
-    if (err.details) { // Add details if they exist
-      responsePayload.details = err.details;
-    }
-    return res.status(err.statusCode).json(responsePayload);
-  }
-  console.error('ERROR 💥 (Non-API DEV):', err);
-  return res.status(err.statusCode).json({ // Keep JSON response for consistency
-    status: err.status,
-    message: 'Something went very wrong on the server (dev mode)!',
-    detailedError: err.message,
-  });
-};
 
-const sendErrorProd = (err, req, res) => {
-  if (req.originalUrl.startsWith('/api')) {
-      if (err.isOperational) {
-        const responsePayload = {
-          status: err.status,
-          message: err.message,
-        };
-        if (err.details) { // Add details if they exist
-          responsePayload.details = err.details;
-        }
-        return res.status(err.statusCode).json(responsePayload);
-      }
-    console.error('ERROR 💥 (API PROD):', err);
-    return res.status(500).json({
-      status: 'error',
-      message: 'Something went very wrong!',
+const globalErrorHandler = (errParam, req, res, next) => {
+  console.log('--- GLOBAL ERROR HANDLER REACHED ---');
+  // Log the raw incoming error parameter. Be cautious in production with sensitive data.
+  if (typeof errParam === 'string' || typeof errParam === 'number' || typeof errParam === 'boolean') {
+    console.error('RAW ERROR (Primitive) in global handler:', errParam);
+  } else {
+    console.error('RAW ERROR (Object) in global handler:', JSON.stringify(errParam, Object.getOwnPropertyNames(errParam)));
+  }
+
+
+  let errorObject;
+
+  if (errParam instanceof AppError) {
+    errorObject = errParam;
+  } else if (errParam instanceof Error) {
+    // For generic Error objects, wrap them in AppError or handle them
+    errorObject = new AppError(errParam.message || 'An unexpected error occurred', 500);
+    errorObject.stack = errParam.stack; // Preserve stack
+    errorObject.name = errParam.name;   // Preserve name
+    // Copy common error properties if they exist
+    if (errParam.code) errorObject.code = errParam.code;
+    if (errParam.path) errorObject.path = errParam.path;
+    if (errParam.value) errorObject.value = errParam.value;
+    if (errParam.keyValue) errorObject.keyValue = errParam.keyValue; // For MongoDB duplicate errors not caught earlier
+    if (errParam.details) errorObject.details = errParam.details; // For validation errors passed as generic Error
+  } else {
+    // If errParam is a string or some other primitive (like 'Must supply api_key')
+    const message = typeof errParam === 'string' ? errParam : 'An unknown error occurred because a non-Error was thrown.';
+    errorObject = new AppError(message, 500);
+    if (process.env.NODE_ENV === 'development') {
+      // Store the original primitive error for debugging in dev mode
+      errorObject.originalErrorValue = errParam;
+    }
+  }
+
+  // Now errorObject is guaranteed to be an instance of AppError or similar structure
+  // Ensure default properties are set if not already (AppError constructor should handle this)
+  errorObject.statusCode = errorObject.statusCode || 500;
+  errorObject.status = errorObject.status || (String(errorObject.statusCode).startsWith('4') ? 'fail' : 'error');
+
+  // Handle specific known error types by potentially re-assigning errorObject
+  if (errorObject.name === 'CastError') errorObject = handleCastErrorDB(errorObject);
+  if (errorObject.code === 11000) errorObject = handleDuplicateFieldsDB(errorObject); // Mongoose duplicate key
+  if (errorObject.name === 'ValidationError') errorObject = handleValidationErrorDB(errorObject);
+  if (errorObject.name === 'JsonWebTokenError') errorObject = handleJWTError();
+  if (errorObject.name === 'TokenExpiredError') errorObject = handleJWTExpiredError();
+  
+  // Specifically identify Cloudinary configuration string errors if they weren't already an AppError
+  if (typeof errParam === 'string' && (errParam.toLowerCase().includes('api_key') || errParam.toLowerCase().includes('cloud_name') || errParam.toLowerCase().includes('api_secret'))) {
+      // This might overwrite a more generic errorObject if errParam was a string.
+      // Ensure this new AppError gets all necessary properties or that subsequent logic handles it.
+      errorObject = new AppError(`Cloudinary configuration error: "${errParam}". Please check server environment variables.`, 500);
+  }
+
+
+  // --- Send response based on environment ---
+  if (process.env.NODE_ENV === 'development') {
+    const devResponse = {
+      status: errorObject.status,
+      message: errorObject.message,
+      error: errParam, // Send original errParam for debugging context
+      stack: errorObject.stack,
+    };
+    if (errorObject.details) devResponse.details = errorObject.details;
+    if (errorObject.originalErrorValue) devResponse.originalErrorValue = errorObject.originalErrorValue;
+
+    console.error('DEV Error Response Sent:', devResponse);
+    return res.status(errorObject.statusCode).json(devResponse);
+  }
+  
+  // Production error handling
+  if (errorObject.isOperational) { // AppError instances are operational
+    return res.status(errorObject.statusCode).json({
+      status: errorObject.status,
+      message: errorObject.message,
+      details: errorObject.details, // Only if details exist and are safe for prod
     });
   }
-
-  // For non-API requests in production
-  if (err.isOperational) {
-     return res.status(err.statusCode).json({ // Keep JSON response for consistency
-        status: err.status,
-        message: err.message,
-      });
-  }
-  console.error('ERROR 💥 (Non-API PROD):', err);
+  
+  // Non-operational errors (programming or unknown errors) in production:
+  // 1) Log error to console (already done with RAW ERROR log)
+  console.error('PRODUCTION: Non-operational error occurred:', errParam); // Log original error
+  // 2) Send generic message
   return res.status(500).json({
     status: 'error',
-    message: 'Something went very wrong on the server!',
+    message: 'Something went very wrong on our end!',
   });
 };
 
-const globalErrorHandler = (err, req, res, next) => {
-  err.statusCode = err.statusCode || 500;
-  err.status = err.status || 'error';
-
-  if (process.env.NODE_ENV === 'development') {
-    sendErrorDev(err, req, res);
-  } else if (process.env.NODE_ENV === 'production') {
-    // Create a copy of the error object. Note: spread operator on error objects might not copy all properties like 'name'.
-    // It's safer to copy specific properties or use a library if deep cloning is needed.
-    // For our common cases (CastError, etc.), direct property access is often fine.
-    let error = { ...err, message: err.message, name: err.name, code: err.code, path: err.path, value: err.value, errmsg: err.errmsg, keyValue: err.keyValue };
-
-
-    if (error.name === 'CastError') error = handleCastErrorDB(error);
-    if (error.code === 11000) error = handleDuplicateFieldsDB(error); // MongoDB duplicate key error
-    if (error.name === 'ValidationError') error = handleValidationErrorDB(error);
-    if (error.name === 'JsonWebTokenError') error = handleJWTError();
-    if (error.name === 'TokenExpiredError') error = handleJWTExpiredError();
-
-    sendErrorProd(error, req, res);
-  }
-};
-
+// Ensure this is the default export if you are using ES Modules
 export default globalErrorHandler;

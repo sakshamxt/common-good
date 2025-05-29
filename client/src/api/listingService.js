@@ -12,37 +12,23 @@ export const getListingById = async (listingId) => {
   return response.data.data;
 };
 
-/**
- * Creates a new listing.
- * @param {FormData} formData - The listing data, including files.
- * @returns {Promise<object>} The API response data.
- */
 export const createListing = async (formData) => {
   const response = await axiosInstance.post('/listings', formData, {
-    headers: {
-      'Content-Type': 'multipart/form-data', // Important for file uploads
-    },
+    headers: { 'Content-Type': 'multipart/form-data' },
   });
-  return response.data.data; // Expects { listing: { ... } }
+  return response.data.data;
 };
 
-/**
- * Updates an existing listing.
- * @param {string} listingId - The ID of the listing to update.
- * @param {FormData} formData - The updated listing data, including new files and deletion info.
- * @returns {Promise<object>} The API response data.
- */
 export const updateListing = async (listingId, formData) => {
   const response = await axiosInstance.patch(`/listings/${listingId}`, formData, {
-    headers: {
-      'Content-Type': 'multipart/form-data',
-    },
+    headers: { 'Content-Type': 'multipart/form-data' },
   });
-  return response.data.data; // Expects { listing: { ... } }
+  return response.data.data;
 };
 
-// Optional: Delete listing function (though often done on a detail page or 'my listings' page)
-// export const deleteListingApi = async (listingId) => {
-//   const response = await axiosInstance.delete(`/listings/${listingId}`);
-//   return response.data; // Or just status
-// };
+
+export const deleteListingApi = async (listingId) => {
+  if (!listingId) throw new Error("Listing ID is required for deletion.");
+  const response = await axiosInstance.delete(`/listings/${listingId}`);
+  return response.data; // Backend returns 204 No Content with { status: 'success', data: null }
+};

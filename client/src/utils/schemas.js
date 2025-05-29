@@ -57,3 +57,23 @@ export const updateListingFormSchema = listingFormSchema.partial().extend({
 });
 
 
+
+const MAX_PROFILE_PIC_SIZE_MB = 2;
+
+const profilePicFileSchema = z
+  .instanceof(File)
+  .refine((file) => file.size <= MAX_PROFILE_PIC_SIZE_MB * 1024 * 1024, `Max file size is ${MAX_PROFILE_PIC_SIZE_MB}MB.`)
+  .refine((file) => ACCEPTED_IMAGE_TYPES.includes(file.type), ".jpg, .jpeg, .png, and .webp files are accepted.");
+
+export const profileUpdateSchema = z.object({
+  name: z.string().min(2, "Name must be at least 2 characters.").max(50, "Name too long.").optional(),
+  bio: z.string().max(500, "Bio cannot exceed 500 characters.").optional().nullable(),
+  location: z.string().max(100, "Location too long.").optional().nullable(),
+  // For skills, we'll take comma-separated strings and transform them
+  skillsOffered: z.string().optional().transform(val => val ? val.split(',').map(skill => skill.trim()).filter(skill => skill) : []),
+  skillsSought: z.string().optional().transform(val => val ? val.split(',').map(skill => skill.trim()).filter(skill => skill) : []),
+  profilePicture: z.union([z.null(), profilePicFileSchema, z.string()]).optional(), // Can be null (no change), a new File, or a string (existing URL - though we don't submit URL)
+  // Coordinates (optional, similar to listing form)
+  longitude: z.string().optional().nullable().refine(val => !val || !isNaN(parseFloat(val)), "Longitude must be a number if provided."),
+  latitude: z.string().optional().nullable().refine(val => !val || !isNaN(parseFloat(val)), "Latitude must be a number if provided."),
+});

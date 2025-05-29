@@ -23,6 +23,9 @@ const listingTypes = ['OfferSkill', 'RequestSkill', 'OfferItem', 'RequestItem'];
 // Example categories - you might fetch these or have a more robust system
 const categories = ["Technology", "Education", "Home & Garden", "Arts & Crafts", "Services", "Apparel", "Electronics", "Furniture", "Other"];
 
+// Maximum number of files allowed for upload
+const MAX_TOTAL_FILES = 5;
+
 
 const CreateListingPage = () => {
   const navigate = useNavigate();

@@ -14,10 +14,13 @@ import LoginPage from '@/pages/auth/LoginPage';
 import SignupPage from '@/pages/auth/SignupPage';
 import ListingsPage from '@/pages/listings/ListingsPage';
 import ListingDetailPage from '@/pages/listings/ListingDetailPage';
-// Import ProtectedRoute once created
-// import ProtectedRoute from './ProtectedRoute';
-// Import other pages as they are created
-// e.g., CreateListingPage, ProfilePage, etc.
+import CreateListingPage from '@/pages/listings/CreateListingPage';
+import EditListingPage from '@/pages/listings/EditListingPage'; 
+import ProfilePage from '@/pages/profile/ProfilePage'; 
+import EditProfilePage from '@/pages/profile/EditProfilePage';
+import MyListingsPage from '@/pages/listings/MyListingsPage'; 
+
+import ProtectedRoute from './ProtectedRoute';
 
 const AppRoutes = () => {
   return (
@@ -29,10 +32,35 @@ const AppRoutes = () => {
         <Route path="/listings/:listingId" element={<ListingDetailPage />} />
         {/* Add more public routes using MainLayout here */}
         
-        {/* Example of how protected routes will look (to be implemented fully later) */}
-        {/* <Route path="/listings/new" element={<ProtectedRoute><CreateListingPage /></ProtectedRoute>} /> */}
-        {/* <Route path="/profile/me" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} /> */}
-        {/* <Route path="/messages" element={<ProtectedRoute><ConversationsPage /></ProtectedRoute>} /> */}
+        {/* Protected Listing Routes */}
+        <Route 
+          path="/listings/new" 
+          element={<ProtectedRoute><CreateListingPage /></ProtectedRoute>} 
+        />
+        <Route 
+          path="/listings/:listingId/edit" 
+          element={<ProtectedRoute><EditListingPage /></ProtectedRoute>} 
+        />
+
+        {/* Profile Routes */}
+        <Route 
+          path="/profile/me" 
+          element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} 
+        />
+        <Route 
+          path="/profile/:userId" 
+          element={<ProfilePage />} // Publicly viewable profile
+        />
+        <Route 
+          path="/profile/me/edit" 
+          element={<ProtectedRoute><EditProfilePage /></ProtectedRoute>} 
+        />
+
+        <Route 
+          path="/my-listings" // <-- New Route
+          element={<ProtectedRoute><MyListingsPage /></ProtectedRoute>} 
+        />
+
       </Route>
 
       {/* Routes with AuthLayout */}
