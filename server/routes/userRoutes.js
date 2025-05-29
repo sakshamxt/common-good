@@ -22,6 +22,7 @@ router.patch(
   updateMe
 );
 
+
 // router.patch('/updateMyPassword', updateMyPassword);
 // router.patch('/deleteMe', deleteMe); // Or use HTTP DELETE for deactivation
 

@@ -6,6 +6,8 @@ import AppError from '../utils/appError.js';
 import catchAsync from '../utils/catchAsync.js';
 
 export const protect = catchAsync(async (req, res, next) => {
+
+  
   // 1) Getting token and check if it's there
   let token;
   if (

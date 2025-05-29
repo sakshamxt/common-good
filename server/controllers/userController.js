@@ -63,6 +63,7 @@ export const updateMe = catchAsync(async (req, res, next) => {
   });
 });
 
+
 export const getUserProfile = catchAsync(async (req, res, next) => {
   const user = await User.findById(req.params.userId)
     // Optionally select only public fields, or rely on schema defaults (e.g. password not selected)

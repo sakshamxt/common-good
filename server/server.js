@@ -48,7 +48,7 @@ app.get('/', (req, res) => {
 // Handle 404 Not Found for API routes
 // This should be placed after all your specific API routes are defined
 // and before the global error handler.
-app.all('/api/*', (req, res, next) => {
+app.all('/api/*path', (req, res, next) => {
   next(new AppError(`Can't find ${req.originalUrl} on this server!`, 404));
 });
 
