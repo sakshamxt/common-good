@@ -4,7 +4,8 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import { Toaster } from 'react-hot-toast';
 import AppRoutes from './routes/AppRoutes';
-import { AuthProvider } from './contexts/AuthContext'; // <-- Import AuthProvider
+import { AuthProvider } from './contexts/AuthContext';
+import ScrollToTop from './components/common/ScrollToTop';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -20,6 +21,7 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <Router>
+        <ScrollToTop />
         <AuthProvider> {/* <-- Wrap with AuthProvider */}
           <AppRoutes />
         </AuthProvider>

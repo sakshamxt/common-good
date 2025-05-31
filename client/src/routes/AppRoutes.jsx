@@ -19,6 +19,9 @@ import EditListingPage from '@/pages/listings/EditListingPage';
 import ProfilePage from '@/pages/profile/ProfilePage'; 
 import EditProfilePage from '@/pages/profile/EditProfilePage';
 import MyListingsPage from '@/pages/listings/MyListingsPage'; 
+import ConversationsPage from '@/pages/messaging/ConversationsPage';
+import MessageArea from '@/components/messaging/MessageArea';
+import SubmitReviewPage from '@/pages/reviews/SubmitReviewPage';
 
 import ProtectedRoute from './ProtectedRoute';
 
@@ -61,7 +64,21 @@ const AppRoutes = () => {
           element={<ProtectedRoute><MyListingsPage /></ProtectedRoute>} 
         />
 
+        {/* Messaging Routes */}
+        <Route path="/messages" element={<ProtectedRoute><ConversationsPage /></ProtectedRoute>}>
+          {/* Nested route for displaying messages of a specific conversation */}
+          <Route path=":conversationId" element={<MessageArea />} />
+          {/* The "new" state is handled within ConversationsPage logic based on /messages/new path or query params */}
+          <Route path="new" element={null} /> {/* Let ConversationsPage use its internal logic for /new */}
+        </Route>
+        {/* Explicit route for /messages/new to ensure ConversationsPage is rendered */}
+        <Route path="/messages/new" element={<ProtectedRoute><ConversationsPage /></ProtectedRoute>} /> 
       </Route>
+
+      <Route 
+          path="/listings/:listingId/review" 
+          element={<ProtectedRoute><SubmitReviewPage /></ProtectedRoute>} 
+      />
 
       {/* Routes with AuthLayout */}
       <Route element={<AuthLayout />}>

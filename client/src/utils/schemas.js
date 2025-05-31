@@ -77,3 +77,13 @@ export const profileUpdateSchema = z.object({
   longitude: z.string().optional().nullable().refine(val => !val || !isNaN(parseFloat(val)), "Longitude must be a number if provided."),
   latitude: z.string().optional().nullable().refine(val => !val || !isNaN(parseFloat(val)), "Latitude must be a number if provided."),
 });
+
+
+export const reviewFormSchema = z.object({
+  rating: z.number().min(1, "Rating must be at least 1 star.").max(5, "Rating cannot exceed 5 stars."),
+  comment: z.string().min(10, "Comment must be at least 10 characters.").max(1000, "Comment too long."),
+  // listingId and revieweeId will be passed programmatically, not typically as form fields by user.
+  // If they were part of the form, they'd be:
+  // listingId: z.string().refine(val => mongoose.Types.ObjectId.isValid(val), { message: "Invalid Listing ID"}),
+  // revieweeId: z.string().refine(val => mongoose.Types.ObjectId.isValid(val), { message: "Invalid User ID for reviewee"}),
+});
